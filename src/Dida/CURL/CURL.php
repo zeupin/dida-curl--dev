@@ -30,10 +30,10 @@ class CURL
      * @param array $input  要提交的数据
      *      url     (string)  url
      *      query   (array)   可选，url中的查询串，默认为[]
-     *      data    (array)   可选，post的数据，默认为[]
+     *      data    (array|string)   可选，post的数据，默认为[]
      *      method  (string)  可选，默认为GET，可设置 restful支持的几种类型，用大写
      *
-     * @param array $options  要额外设置的curl选项。如有设置，将用这个数组的选项覆盖默认选项
+     * @param array $curloptions  要额外设置的curl选项。如有设置，将用这个数组的选项覆盖默认选项
      * [
      *      选项 => 值,
      *      选项 => 值,
@@ -42,7 +42,7 @@ class CURL
      *
      * @return array [$code, $msg, $data]
      */
-    public function request(array $input, array $options = [])
+    public function request(array $input, array $curloptions = [])
     {
         // url
         $url = $input["url"];
@@ -106,7 +106,7 @@ class CURL
         curl_setopt_array($curl, $defaults);
 
         // 用参数要求的选项值代替默认值
-        curl_setopt_array($curl, $options);
+        curl_setopt_array($curl, $curloptions);
 
         // 执行curl请求
         $data = curl_exec($curl);
