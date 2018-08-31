@@ -17,7 +17,7 @@ class CURL
     /**
      * 版本号
      */
-    const VERSION = '20180427';
+    const VERSION = '20180901';
 
     /**
      * 错误列表
@@ -32,6 +32,33 @@ class CURL
      */
     public $method = "GET";
     public $valid_methods = ["GET", "POST"];
+
+    /**
+     * 要提交的header
+     *
+     * @var array
+     */
+    public $header = [];
+
+
+    /**
+     * 新增一行报文头
+     *
+     * @param string $line
+     */
+    public function addHeader($line)
+    {
+        $this->header[] = $line;
+    }
+
+
+    /**
+     * 清除所有的报文头
+     */
+    public function clearHeaders()
+    {
+        $this->header = [];
+    }
 
 
     /**
@@ -113,7 +140,23 @@ class CURL
             CURLOPT_HEADER         => 0, // 不需要Header区域内容
             CURLOPT_RETURNTRANSFER => 1, // 获取的信息以文件流的形式返回
         ];
+
+        // 设置
         curl_setopt_array($curl, $defaults);
+
+        // 对报文头的特别处理
+        $header = $this->header;
+        if (array_key_exists(CURLOPT_HTTPHEADER, $curloptions)) {
+            $header = array_merge($header, $curloptions[CURLOPT_HTTPHEADER]); // 合并
+            $header = array_unique($header); // 去重
+            unset($curloptions[CURLOPT_HTTPHEADER]);
+        }
+        if ($header) {
+            curl_setopt_array($curl, [
+                CURLOPT_HEADER     => 1,
+                CURLOPT_HTTPHEADER => $header
+            ]);
+        }
 
         // 用参数要求的选项值代替默认值
         curl_setopt_array($curl, $curloptions);
@@ -127,10 +170,85 @@ class CURL
             return [$err_no, curl_error($curl), null];
         }
 
-        //关闭cURL请求
+        // 关闭cURL请求
         curl_close($curl);
 
-        //返回获得的数据
+        // 如果正常，返回获得的数据
         return [0, null, $data];
+    }
+
+
+    /**
+     * 向指定地址POST一个JSON字符串
+     *
+     * @param string $url
+     * @param string $json
+     */
+    public function postjson($url, $json)
+    {
+        $input = [
+            "url"    => $url,
+            "method" => "POST",
+            "data"   => $json,
+        ];
+
+        $curloptions = [
+            CURLOPT_HEADER     => 1,
+            CURLOPT_HTTPHEADER => [
+                "Content-Type: application/json;charset=UTF-8"
+            ],
+        ];
+
+        return $this->request($input, $curloptions);
+    }
+
+
+    /**
+     * 解析http返回的数据流
+     *
+     * @param string $resp
+     *
+     * @return false|array  成功返回一个结构数组，失败返回false
+     */
+    public function parseHttpResponse($resp)
+    {
+        $matches = null;
+
+        // 将数据流按行拆分
+        $lines = explode("\r\n", $resp);
+
+        // 第1行
+        $line1 = $lines[0];
+        $r = preg_match("/(HTTP\/)(\d\.\d)\s(\d\d\d)/", $line1, $matches);
+        if ($r) {
+            // 获取HTTP状态码
+            $statusCode = $matches[3];
+        } else {
+            // 不合法，直接返回false，解析失败
+            return false;
+        }
+        unset($lines[0]);
+
+        // headers
+        $headers = [];
+        foreach ($lines as $n => $line) {
+            if ($line === '') {
+                unset($lines[$n]);
+                break;
+            }
+
+            $headers[] = $line;
+            unset($lines[$n]);
+        }
+
+        // body
+        $body = implode("\r\n", $lines);
+
+        // 输出
+        return [
+            "code"    => $statusCode,
+            "headers" => $headers,
+            "body"    => $body,
+        ];
     }
 }
