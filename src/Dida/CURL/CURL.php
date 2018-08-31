@@ -25,13 +25,23 @@ class CURL
     const ERR_INVALID_METHOD = -1;      // method无效，目前仅限Restful风格支持的几种
 
     /**
+     * 默认的提交方式。
+     * 可设置为$valid_methods支持的几种类型，用大写
+     *
+     * @var string
+     */
+    public $method = "GET";
+    public $valid_methods = ["GET", "POST"];
+
+
+    /**
      * 发送数据到指定url，返回一个结构
      *
      * @param array $input  要提交的数据
      *      url     (string)  url
+     *      method  (string)  可选，默认为$this->method，详见类的$method属性
      *      query   (array)   可选，url中的查询串，默认为[]
      *      data    (array|string)   可选，post的数据，默认为[]
-     *      method  (string)  可选，默认为GET，可设置 restful支持的几种类型，用大写
      *
      * @param array $curloptions  要额外设置的curl选项。如有设置，将用这个数组的选项覆盖默认选项
      * [
@@ -48,9 +58,9 @@ class CURL
         $url = $input["url"];
 
         // 请求方式method
-        $method = (isset($input["method"])) ? $input["method"] : "GET";
+        $method = (isset($input["method"])) ? $input["method"] : $this->method;
         $method = strtoupper($method);
-        if (!in_array($method, ["GET", "POST"])) {
+        if (!in_array($method, $this->valid_methods)) {
             return [self::ERR_INVALID_METHOD, "无效的请求方式", null];
         }
 
