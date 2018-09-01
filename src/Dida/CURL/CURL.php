@@ -206,7 +206,7 @@ class CURL
     /**
      * 解析http返回的数据流
      *
-     * @param string $resp
+     * @param string $resp HTTP的应答报文流
      *
      * @return false|array  成功返回一个结构数组，失败返回false
      */
@@ -219,9 +219,10 @@ class CURL
 
         // 第1行
         $line1 = $lines[0];
-        $r = preg_match("/(HTTP\/)(\d\.\d)\s(\d\d\d)/", $line1, $matches);
+        $pattern = "/(HTTP\/)(\d\.\d)\s(\d\d\d)/"; // 形如 HTTP/1.1 200
+        $r = preg_match($pattern, $line1, $matches);
         if ($r) {
-            // 获取HTTP状态码
+            // 获取HTTP状态码, 正常为200
             $statusCode = $matches[3];
         } else {
             // 不合法，直接返回false，解析失败
