@@ -64,7 +64,7 @@ class CURL
     /**
      * 发送数据到指定url，返回一个结构
      *
-     * @param array $input  要提交的数据
+     * @param array $http  要提交的数据
      *      url     (string)  url
      *      method  (string)  可选，默认为$this->method，详见类的$method属性
      *      query   (array)   可选，url中的查询串，默认为[]
@@ -79,26 +79,26 @@ class CURL
      *
      * @return array [$code, $msg, $data]
      */
-    public function request(array $input, array $curloptions = [])
+    public function request(array $http, array $curloptions = [])
     {
         // url
-        $url = $input["url"];
+        $url = $http["url"];
 
         // 请求方式method
-        $method = (isset($input["method"])) ? $input["method"] : $this->method;
+        $method = (isset($http["method"])) ? $http["method"] : $this->method;
         $method = strtoupper($method);
         if (!in_array($method, $this->valid_methods)) {
             return [self::ERR_INVALID_METHOD, "无效的请求方式", null];
         }
 
         // 查询串
-        $query = (isset($input["query"])) ? $input["query"] : '';
+        $query = (isset($http["query"])) ? $http["query"] : '';
         if (is_array($query)) {
             $query = http_build_query($query);
         }
 
         // POST数据
-        $data = (isset($input["data"])) ? $input["data"] : null;
+        $data = (isset($http["data"])) ? $http["data"] : null;
         if (is_array($data)) {
             $data = http_build_query($data);
         }
